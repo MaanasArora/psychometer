@@ -1,23 +1,51 @@
-class LikertResultScore {
-  const LikertResultScore(this.score, this.value);
+class LikertTest {
+  const LikertTest(this.name, this.questions, this.scores);
 
-  final LikertScore score;
-  final double value;
+  final String name;
+  final List<String> questions;
+  final List<LikertScore> scores;
 
-  double deviation() {
-    return (value - score.mean!) / score.stdev!;
+  LikertResult score(List<int> responses) {
+    List<LikertResultScore> resultScores = [];
+
+    for (LikertScore score in scores) {
+      double value = score.evaluate(responses);
+
+      resultScores.add(LikertResultScore(score, value));
+    }
+
+    return LikertResult(resultScores);
+  }
+
+  LikertTest shuffled() {
+    List<int> shuffledIndices =
+        List.generate(questions.length, (index) => index);
+    shuffledIndices.shuffle();
+
+    Map<int, int> shuffleLookup =
+        shuffledIndices.asMap().map((key, value) => MapEntry(value, key));
+
+    List<String> newQuestions =
+        shuffledIndices.map((index) => questions[index]).toList();
+
+    List<LikertScore> newScores = scores
+        .map((score) => LikertScore(
+            score.name,
+            score.questionIndices.map((index) => shuffleLookup[index]!).toSet(),
+            score.weights.map(
+                (index, weight) => MapEntry(shuffleLookup[index]!, weight)),
+            score.mean,
+            score.stdev,
+            score.description))
+        .toList();
+
+    return LikertTest(name, newQuestions, newScores);
   }
 }
 
-class LikertResult {
-  const LikertResult(this.scores);
-
-  final List<LikertResultScore> scores;
-}
-
 class LikertScore {
-  const LikertScore(
-      this.name, this.questionIndices, this.weights, this.mean, this.stdev);
+  const LikertScore(this.name, this.questionIndices, this.weights, this.mean,
+      this.stdev, this.description);
 
   final String name;
   final Set<int> questionIndices;
@@ -25,6 +53,8 @@ class LikertScore {
 
   final double? mean;
   final double? stdev;
+
+  final String description;
 
   double getMaxScore() {
     double maxPositive = 5 *
@@ -57,28 +87,46 @@ class LikertScore {
 
     for (int index in questionIndices) {
       value += weights[index]! * responses[index];
+      if (weights[index]! < 0) value += 6;
     }
 
-    return value;
+    return value / questionIndices.length;
   }
 }
 
-class LikertTest {
-  const LikertTest(this.name, this.questions, this.scores);
+class LikertResultScore {
+  const LikertResultScore(this.score, this.value);
 
-  final String name;
-  final List<String> questions;
-  final List<LikertScore> scores;
+  final LikertScore score;
+  final double value;
 
-  LikertResult score(List<int> responses) {
-    List<LikertResultScore> resultScores = [];
-
-    for (LikertScore score in scores) {
-      double value = score.evaluate(responses);
-
-      resultScores.add(LikertResultScore(score, value));
-    }
-
-    return LikertResult(resultScores);
+  double deviation() {
+    return (value - score.mean!) / score.stdev!;
   }
+
+  String describeLevel() {
+    double dev = deviation();
+
+    if (dev < -2.5) {
+      return "Very Low";
+    } else if (dev < -1.5) {
+      return "Low";
+    } else if (dev < -0.5) {
+      return "Slightly Low";
+    } else if (dev < 0.5) {
+      return "Average";
+    } else if (dev < 1.5) {
+      return "Slightly high";
+    } else if (dev < 2.5) {
+      return "High";
+    } else {
+      return "Very High";
+    }
+  }
+}
+
+class LikertResult {
+  const LikertResult(this.scores);
+
+  final List<LikertResultScore> scores;
 }

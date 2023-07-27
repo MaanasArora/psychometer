@@ -45,24 +45,24 @@ class LikertResponseSet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-        children: List.generate(5, (index) => index + 1)
-            .map((index) => [
-                  LikertResponse(
-                    groupValue: value,
-                    value: index,
-                    onPressed: () {
-                      onChange(index);
-                    },
-                  ),
-                  const SizedBox(
-                    width: 10.0,
-                  )
-                ])
-            .expand(
-              (element) => element,
-            )
-            .toList());
+    return Row(children: [
+      ...List.generate(5, (index) => index + 1)
+          .map((index) => [
+                LikertResponse(
+                  groupValue: value,
+                  value: index,
+                  onPressed: () {
+                    onChange(index);
+                  },
+                ),
+                const SizedBox(
+                  width: 15.0,
+                )
+              ])
+          .expand(
+            (element) => element,
+          ),
+    ]);
   }
 }
 

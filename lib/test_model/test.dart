@@ -17,7 +17,8 @@ class LikertTestSerializer {
                 .map((key, value) => MapEntry(int.parse(key), value))
                 .cast<int, double>(),
             score['mean'],
-            score['stdev']))
+            score['stdev'],
+            score['description']))
         .toList();
 
     LikertTest test = LikertTest(jsonData['name'], questions, scores);
